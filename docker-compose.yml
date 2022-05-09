@@ -1,0 +1,38 @@
+version: "3.1"
+
+services:
+  airflow:
+    image: mkenjis/airflow_xtd_spark_img
+    networks:
+      - mynet
+    depends_on:
+      - spk_mst
+    ports:
+      - 8080:8080
+  spk_mst:
+    image: mkenjis/ubspkcluster_img
+    environment:
+      - SPARK_HOST_SLAVES=spk_wkr1,spk_wkr2,spk_wkr3
+    networks:
+      - mynet
+    depends_on:
+      - spk_wkr1,spk_wkr2,spk_wkr3
+  spk_wkr1:
+    image: mkenjis/ubspkcluster_img
+    networks:
+      - mynet
+  spk_wkr2:
+    image: mkenjis/ubspkcluster_img
+    networks:
+      - mynet
+  spk_wkr3:
+    image: mkenjis/ubspkcluster_img
+    networks:
+      - mynet
+  hadoop:
+    image: mkenjis/ubhdp_img
+    networks:
+      - mynet
+      
+networks:
+  mynet:

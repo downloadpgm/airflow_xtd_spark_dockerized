@@ -4,7 +4,7 @@ Apache Airflow is an open-source, workflow management processing system used to 
 
 In this demo, a Airflow container uses a Spark Standalone cluster as a resource management and job scheduling technology to perform distributed data processing.
 
-This Docker image contains Spark binaries prebuilt and uploaded in Docker Hub.
+This Docker image contains Airflow and Spark binaries prebuilt and uploaded in Docker Hub.
 
 ## Steps to Build Airflow image
 ```shell
@@ -60,19 +60,35 @@ $ docker node promote ...
 
 Start Docker stack using docker-compose.yml
 ```shell
-$ docker stack deploy -c docker-compose.yml spark
+$ docker stack deploy -c docker-compose.yml airf
 ```
 
 Check the status of each service started
 ```shell
 $ docker service ls
-ID             NAME             MODE         REPLICAS   IMAGE                             PORTS
-t3s7ud9u21hr   spark_spk_mst    replicated   1/1        mkenjis/ubspkcluster_img:latest   
-mi3w7xvf9vyt   spark_spk_wkr1   replicated   1/1        mkenjis/ubspkcluster_img:latest   
-xlg5ww9q0v6j   spark_spk_wkr2   replicated   1/1        mkenjis/ubspkcluster_img:latest   
-ni5xrb60u71i   spark_spk_wkr3   replicated   1/1        mkenjis/ubspkcluster_img:latest
+ID             NAME            MODE         REPLICAS   IMAGE                                  PORTS
+poz5eukaccf8   airf_airflow    replicated   1/1        mkenjis/airflow_xtd_spark_img:latest   *:8080->8080/tcp
+bdelxdak05dp   airf_hadoop     replicated   1/1        mkenjis/ubhdp_img:latest               
+lm3uckq7psgt   airf_spk_mst    replicated   1/1        mkenjis/ubspkcluster_img:latest        
+ls5083xmlqa4   airf_spk_wkr1   replicated   1/1        mkenjis/ubspkcluster_img:latest        
+nwsldxp5kzmq   airf_spk_wkr2   replicated   1/1        mkenjis/ubspkcluster_img:latest        
+n1mcaoan7tth   airf_spk_wkr3   replicated   1/1        mkenjis/ubspkcluster_img:latest 
 ```
 
+## Load dataset into Hadoop Docker container
+
+Identify which Docker container started as Hadoop and logged into it
+```shell
+$ docker service ps airf_hadoop
+ID             NAME            IMAGE                      NODE      DESIRED STATE   CURRENT STATE           ERROR     PORTS
+bp99uoiqf68f   airf_hadoop.1   mkenjis/ubhdp_img:latest   node4     Running         Running 3 minutes ago 
+
+$ docker container ls   # run it in the node listed above and check which <container ID> is running the Hadoop master constainer
+CONTAINER ID   IMAGE                      COMMAND                  CREATED         STATUS         PORTS      NAMES
+9013fa122d0f   mkenjis/ubhdp_img:latest   "/usr/bin/supervisord"   5 minutes ago   Up 5 minutes   9000/tcp   airf_hadoop.1.bp99uoiqf68fltggppdselwhr
+ 
+$ docker container exec -it <container ID> bash
+```
 ## Loading Python scripts in Airflow Docker container
 
 Identify which Docker container started as Airflow and logged into it

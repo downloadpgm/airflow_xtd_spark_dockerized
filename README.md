@@ -130,6 +130,12 @@ $ docker container exec -it <container ID> bash
 $ vi transform.py  -- change HDFS path pointing to container running Hadoop container (in the script hdfs://<container_id>:9000)
 ```
 
+Add the following parameters to $SPARK_HOME/conf/spark-defaults.conf
+```shell
+$ vi $SPARK_HOME/conf/spark-env.sh
+export JAVA_HOME=/usr/local/jre1.8.0_181
+```
+
 ## Execute the following steps in Airflow UI
 
 ![AIRFLOW login](docs/airflow_login.png)

@@ -67,12 +67,12 @@ Check the status of each service started
 ```shell
 $ docker service ls
 ID             NAME            MODE         REPLICAS   IMAGE                                  PORTS
-poz5eukaccf8   airf_airflow    replicated   1/1        mkenjis/airflow_xtd_spark_img:latest   *:8080->8080/tcp
-bdelxdak05dp   airf_hadoop     replicated   1/1        mkenjis/ubhdp_img:latest               
-lm3uckq7psgt   airf_spk_mst    replicated   1/1        mkenjis/ubspkcluster_img:latest        
-ls5083xmlqa4   airf_spk_wkr1   replicated   1/1        mkenjis/ubspkcluster_img:latest        
-nwsldxp5kzmq   airf_spk_wkr2   replicated   1/1        mkenjis/ubspkcluster_img:latest        
-n1mcaoan7tth   airf_spk_wkr3   replicated   1/1        mkenjis/ubspkcluster_img:latest 
+lkm9m7w4tcwg   airf_airflow    replicated   1/1        mkenjis/airflow_xtd_spark_img:latest   *:8080->8080/tcp
+o7ggcjcrrdd2   airf_hadoop     replicated   1/1        mkenjis/ubhdp_img:latest               
+s0lr2m27ptk3   airf_spk_mst    replicated   1/1        mkenjis/ubspkcluster_img:latest        
+251p744izqr0   airf_spk_wkr1   replicated   1/1        mkenjis/ubspkcluster_img:latest        
+c62nf5kf2l6z   airf_spk_wkr2   replicated   1/1        mkenjis/ubspkcluster_img:latest        
+xbins34s94l1   airf_spk_wkr3   replicated   1/1        mkenjis/ubspkcluster_img:latest
 ```
 
 ## Load dataset into Hadoop Docker container
@@ -81,45 +81,61 @@ Identify which Docker container started as Hadoop and logged into it
 ```shell
 $ docker service ps airf_hadoop
 ID             NAME            IMAGE                      NODE      DESIRED STATE   CURRENT STATE           ERROR     PORTS
-bp99uoiqf68f   airf_hadoop.1   mkenjis/ubhdp_img:latest   node4     Running         Running 3 minutes ago 
+efxw2rbw83yp   airf_hadoop.1   mkenjis/ubhdp_img:latest   node3     Running         Running 4 minutes ago 
 
 $ docker container ls   # run it in the node listed above and check which <container ID> is running the Hadoop master constainer
 CONTAINER ID   IMAGE                      COMMAND                  CREATED         STATUS         PORTS      NAMES
-9013fa122d0f   mkenjis/ubhdp_img:latest   "/usr/bin/supervisord"   5 minutes ago   Up 5 minutes   9000/tcp   airf_hadoop.1.bp99uoiqf68fltggppdselwhr
- 
-$ docker container exec -it <container ID> bash
+a62b5898628c   mkenjis/ubhdp_img:latest   "/usr/bin/supervisord"   5 minutes ago   Up 5 minutes   9000/tcp   airf_hadoop.1.efxw2rbw83ypoz0bqizd7nczx
 ```
+
+Load the dataset into Hadoop´s container HDFS filesystem
+
+```shell
+$ docker container cp wine_quality.csv <container ID>:/tmp
+
+$ docker container exec -it <container ID> bash
+
+root@a62b5898628c:~# hdfs dfs -mkdir /data 
+22/05/10 14:55:15 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+root@a62b5898628c:~# hdfs dfs -put /tmp/wine_quality.csv /data
+22/05/10 14:55:45 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+root@a62b5898628c:~# hdfs dfs -ls /data
+22/05/10 14:55:56 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+Found 1 items
+-rw-r--r--   1 root supergroup      84199 2022-05-10 14:55 /data/wine_quality.csv
+```
+
 ## Loading Python scripts in Airflow Docker container
 
-Identify which Docker container started as Airflow and logged into it
+Identify which Docker container started as Hadoop and logged into it
 ```shell
-$ docker container ls   # run it in each node and check which <container ID> is running the Hadoop master constainer
-CONTAINER ID   IMAGE                         COMMAND                  CREATED              STATUS              PORTS      NAMES
-71717fcd5a01   mkenjis/ubspkcluster_img:latest   "/usr/bin/supervisord"   14 minutes ago   Up 14 minutes   4040/tcp, 7077/tcp, 8080-8082/tcp, 10000/tcp   spark_spk_wkr2.1.bf8tsqv5lyfa4h5i8utwvtpch
-464730a41833   mkenjis/ubspkcluster_img:latest   "/usr/bin/supervisord"   14 minutes ago   Up 14 minutes   4040/tcp, 7077/tcp, 8080-8082/tcp, 10000/tcp   spark_spk_mst.1.n01a49esutmbgv5uum3tdsm6p
+docker service ps airf_airflow
+ID             NAME             IMAGE                                  NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
+qmhzon64szjb   airf_airflow.1   mkenjis/airflow_xtd_spark_img:latest   node1     Running         Running 11 minutes ago
 
-$ docker container exec -it <container ID> bash
+$ docker container ls   # run it in the node listed above and check which <container ID> is running the Hadoop master constainer
+CONTAINER ID   IMAGE                                  COMMAND                  CREATED          STATUS          PORTS                                          NAMES
+af30de6ade07   mkenjis/airflow_xtd_spark_img:latest   "/usr/bin/supervisord"   13 minutes ago   Up 13 minutes   8080/tcp                                       airf_airflow.1.qmhzon64szjb0fnrlucnxe1mn
+3b591e008a92   mkenjis/ubspkcluster_img:latest        "/usr/bin/supervisord"   15 minutes ago   Up 15 minutes   4040/tcp, 7077/tcp, 8080-8082/tcp, 10000/tcp   airf_spk_wkr1.1.ir53adba58f2x6l2hdl2eckw7
 ```
 
 Inside the Airflow container, load Python scripts as below
 ```shell
-$ spark-shell --master spark://<hostname>:7077
-2021-12-13 15:09:50 WARN  NativeCodeLoader:62 - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-Setting default log level to "WARN".
-To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
-Spark context Web UI available at http://464730a41833:4040
-Spark context available as 'sc' (master = spark://464730a41833:7077, app id = app-20211213150958-0000).
-Spark session available as 'spark'.
-Welcome to
-      ____              __
-     / __/__  ___ _____/ /__
-    _\ \/ _ \/ _ `/ __/  '_/
-   /___/ .__/\_,_/_/ /_/\_\   version 2.3.2
-      /_/
-         
-Using Scala version 2.11.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_181)
-Type in expressions to have them evaluated.
-Type :help for more information.
+$ docker container cp transform.py <container ID>:/root
 
-scala> 
+$ docker container cp transf_dag.py <container ID>:/root/airflow/dags/transf_dag.py
+
+$ docker container exec -it <container ID> bash
+
+$ vi transform.py  -- change HDFS path pointing to container running Hadoop container (in the script hdfs://<container_id>:9000)
 ```
+
+## Execute the following steps in Airflow UI
+
+![AIRFLOW login](docs/airflow_login.png)
+![AIRFLOW home](docs/airflow_home.png)
+![AIRFLOW spark_connection](docs/airflow_spark_connection.png)
+![AIRFLOW setup_spark_connection](docs/airflow_setup_spark_connection.png)
+![AIRFLOW enable_dag](docs/airflow_enable_dag.png)
+![AIRFLOW run_dag](docs/airflow_run_dag.png)
+![AIRFLOW run_result](docs/airflow_run_result.png)

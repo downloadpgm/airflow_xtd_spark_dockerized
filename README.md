@@ -107,7 +107,7 @@ Found 1 items
 
 ## Loading Python scripts in Airflow Docker container
 
-Identify which Docker container started as Hadoop and logged into it
+Identify which Docker container started as Airflow and logged into it
 ```shell
 docker service ps airf_airflow
 ID             NAME             IMAGE                                  NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS

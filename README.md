@@ -133,9 +133,15 @@ $ vi transform.py  -- change HDFS path pointing to container running Hadoop cont
 ## Execute the following steps in Airflow UI
 
 ![AIRFLOW login](docs/airflow_login.png)
+
 ![AIRFLOW home](docs/airflow_home.png)
+
 ![AIRFLOW spark_connection](docs/airflow_spark_connection.png)
+
 ![AIRFLOW setup_spark_connection](docs/airflow_setup_spark_connection.png)
+
 ![AIRFLOW enable_dag](docs/airflow_enable_dag.png)
+
 ![AIRFLOW run_dag](docs/airflow_run_dag.png)
+
 ![AIRFLOW run_result](docs/airflow_run_result.png)

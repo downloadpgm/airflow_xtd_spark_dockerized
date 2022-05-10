@@ -150,4 +150,6 @@ export JAVA_HOME=/usr/local/jre1.8.0_181
 
 ![AIRFLOW run_dag](docs/airflow_run_dag.png)
 
-![AIRFLOW run_result](docs/airflow_run_dag_result.png)
+![AIRFLOW run_dag_result](docs/airflow_run_dag_result.png)
+
+![AIRFLOW run_dag_log](docs/airflow_run_dag_log.png)

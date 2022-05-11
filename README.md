@@ -95,12 +95,9 @@ $ docker container cp wine_quality.csv <container ID>:/tmp
 
 $ docker container exec -it <container ID> bash
 
-root@a62b5898628c:~# hdfs dfs -mkdir /data 
-22/05/10 14:55:15 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-root@a62b5898628c:~# hdfs dfs -put /tmp/wine_quality.csv /data
-22/05/10 14:55:45 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
-root@a62b5898628c:~# hdfs dfs -ls /data
-22/05/10 14:55:56 WARN util.NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+$ hdfs dfs -mkdir /data 
+$ hdfs dfs -put /tmp/wine_quality.csv /data
+$ hdfs dfs -ls /data
 Found 1 items
 -rw-r--r--   1 root supergroup      84199 2022-05-10 14:55 /data/wine_quality.csv
 ```
@@ -109,7 +106,7 @@ Found 1 items
 
 Identify which Docker container started as Airflow and logged into it
 ```shell
-docker service ps airf_airflow
+$ docker service ps airf_airflow
 ID             NAME             IMAGE                                  NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
 qmhzon64szjb   airf_airflow.1   mkenjis/airflow_xtd_spark_img:latest   node1     Running         Running 11 minutes ago
 
@@ -122,9 +119,7 @@ af30de6ade07   mkenjis/airflow_xtd_spark_img:latest   "/usr/bin/supervisord"   1
 Inside the Airflow container, load Python scripts as below
 ```shell
 $ docker container cp transform.py <container ID>:/root
-
 $ docker container cp transf_dag.py <container ID>:/root/airflow/dags/transf_dag.py
-
 $ docker container exec -it <container ID> bash
 
 $ vi transform.py  -- change HDFS path pointing to container running Hadoop container (in the script hdfs://<container_id>:9000)

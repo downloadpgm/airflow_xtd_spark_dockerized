@@ -6,20 +6,12 @@ In this demo, a Airflow container uses a Spark Standalone cluster as a resource 
 
 This Docker image contains Airflow and Spark binaries prebuilt and uploaded in Docker Hub.
 
-## Steps to Build Airflow image
+## Build Airflow/Spark image
 ```shell
 $ git clone https://github.com/mkenjis/apache_binaries
 $ wget https://archive.apache.org/dist/spark/spark-2.3.2/spark-2.3.2-bin-hadoop2.7.tgz
 $ docker image build -t mkenjis/airflow_xtd_spark_img
-$ docker login
-Login with your Docker ID to push and pull images from Docker Hub. If you don't have a Docker ID, head over to https://hub.docker.com to create one.
-Username: mkenjis
-Password: 
-WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
-Configure a credential helper to remove this warning. See
-https://docs.docker.com/engine/reference/commandline/login/#credentials-store
-
-Login Succeeded
+$ docker login   # provide user and password
 $ docker image push mkenjis/airflow_xtd_spark_img
 ```
 
@@ -32,39 +24,22 @@ Sets up the environment for Spark client by executing the following steps :
 - starts the Scheduler service
 
 
-## Initial Steps on Docker Swarm
+## Start Swarm cluster
 
-To start with, start Swarm mode in Docker in node1
+1. start swarm mode in node1
 ```shell
-$ docker swarm init
-Swarm initialized: current node (xv7mhbt8ncn6i9iwhy8ysemik) is now a manager.
-
-To add a worker to this swarm, run the following command:
-
-    docker swarm join --token <token> <IP node1>:2377
-
-To add a manager to this swarm, run 'docker swarm join-token manager' and follow the instructions.
+$ docker swarm init --advertise-addr <IP node1>
+$ docker swarm join-token manager  # issue a token to add a node as manager to swarm
 ```
 
-Add more workers in cluster hosts (node2, node3, ...) by joining them to manager.
+2. add more managers in swarm cluster (node2, node3, ...)
 ```shell
-$ docker swarm join --token <token> <IP node1>:2377
+$ docker swarm join --token <token> <IP nodeN>:2377
 ```
 
-Change the workers as managers in node2, node3, ...
-```shell
-$ docker node promote node2
-$ docker node promote node3
-$ docker node promote ...
-```
-
-Start Docker stack using docker-compose.yml
+3. start a spark standalone cluster and spark client
 ```shell
 $ docker stack deploy -c docker-compose.yml airf
-```
-
-Check the status of each service started
-```shell
 $ docker service ls
 ID             NAME            MODE         REPLICAS   IMAGE                                  PORTS
 lkm9m7w4tcwg   airf_airflow    replicated   1/1        mkenjis/airflow_xtd_spark_img:latest   *:8080->8080/tcp
@@ -75,24 +50,19 @@ c62nf5kf2l6z   airf_spk_wkr2   replicated   1/1        mkenjis/ubspkcluster_img:
 xbins34s94l1   airf_spk_wkr3   replicated   1/1        mkenjis/ubspkcluster_img:latest
 ```
 
-## Load dataset into Hadoop Docker container
+## Load dataset in HDFS
 
-Identify which Docker container started as Hadoop and logged into it
+1. copy dataset to hadoop master node
 ```shell
-$ docker service ps airf_hadoop
-ID             NAME            IMAGE                      NODE      DESIRED STATE   CURRENT STATE           ERROR     PORTS
-efxw2rbw83yp   airf_hadoop.1   mkenjis/ubhdp_img:latest   node3     Running         Running 4 minutes ago 
-
-$ docker container ls   # run it in the node listed above and check which <container ID> is running the Hadoop master constainer
+$ docker container ls   # run it in each node and check which <container ID> is running the hadoop master constainer
 CONTAINER ID   IMAGE                      COMMAND                  CREATED         STATUS         PORTS      NAMES
 a62b5898628c   mkenjis/ubhdp_img:latest   "/usr/bin/supervisord"   5 minutes ago   Up 5 minutes   9000/tcp   airf_hadoop.1.efxw2rbw83ypoz0bqizd7nczx
+
+$ docker container cp wine_quality.csv <container ID>:/tmp
 ```
 
-Load the dataset into Hadoop´s container HDFS filesystem
-
+2. access hadoop master node, create HDFS directory and copy dataset in this directory
 ```shell
-$ docker container cp wine_quality.csv <container ID>:/tmp
-
 $ docker container exec -it <container ID> bash
 
 $ hdfs dfs -mkdir /data 
@@ -102,31 +72,24 @@ Found 1 items
 -rw-r--r--   1 root supergroup      84199 2022-05-10 14:55 /data/wine_quality.csv
 ```
 
-## Loading Python scripts in Airflow Docker container
+## Loading Python scripts in Airflow
 
-Identify which Docker container started as Airflow and logged into it
+1. copy Python scripts to airflow container
 ```shell
-$ docker service ps airf_airflow
-ID             NAME             IMAGE                                  NODE      DESIRED STATE   CURRENT STATE            ERROR     PORTS
-qmhzon64szjb   airf_airflow.1   mkenjis/airflow_xtd_spark_img:latest   node1     Running         Running 11 minutes ago
-
-$ docker container ls   # run it in the node listed above and check which <container ID> is running the Hadoop master constainer
+$ docker container ls   # run it in each node and check which <container ID> is running the airflow constainer
 CONTAINER ID   IMAGE                                  COMMAND                  CREATED          STATUS          PORTS                                          NAMES
 af30de6ade07   mkenjis/airflow_xtd_spark_img:latest   "/usr/bin/supervisord"   13 minutes ago   Up 13 minutes   8080/tcp                                       airf_airflow.1.qmhzon64szjb0fnrlucnxe1mn
 3b591e008a92   mkenjis/ubspkcluster_img:latest        "/usr/bin/supervisord"   15 minutes ago   Up 15 minutes   4040/tcp, 7077/tcp, 8080-8082/tcp, 10000/tcp   airf_spk_wkr1.1.ir53adba58f2x6l2hdl2eckw7
+
+$ docker container cp transform.py <airflow ID>:/root
+$ docker container cp transf_dag.py <airflow ID>:/root/airflow/dags/transf_dag.py
+$ docker container exec -it <airflow ID> bash
 ```
 
-Inside the Airflow container, load Python scripts as below
+2. edit files with proper settings 
 ```shell
-$ docker container cp transform.py <container ID>:/root
-$ docker container cp transf_dag.py <container ID>:/root/airflow/dags/transf_dag.py
-$ docker container exec -it <container ID> bash
+$ vi transform.py  # change HDFS path pointing to hadoop container (in the script hdfs://<hdpmst_id>:9000)
 
-$ vi transform.py  -- change HDFS path pointing to container running Hadoop container (in the script hdfs://<container_id>:9000)
-```
-
-Add the following parameters to $SPARK_HOME/conf/spark-defaults.conf
-```shell
 $ vi $SPARK_HOME/conf/spark-env.sh
 export JAVA_HOME=/usr/local/jre1.8.0_181
 ```

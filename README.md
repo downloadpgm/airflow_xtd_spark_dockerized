@@ -94,7 +94,16 @@ af30de6ade07   mkenjis/airflow_xtd_spark_img:latest   "/usr/bin/supervisord"   1
 
 $ docker container cp transform.py <airflow ID>:/root
 $ docker container cp transf_dag.py <airflow ID>:/root/airflow/dags/transf_dag.py
+```
+
+2. edit spark-defaults.conf
+```shell
 $ docker container exec -it <airflow ID> bash
+
+$ vi $SPARK_HOME/conf/spark-defaults.conf
+spark.driver.memory  1024m
+spark.yarn.am.memory 1024m
+spark.executor.memory  1536m
 ```
 
 2. edit files with proper settings 

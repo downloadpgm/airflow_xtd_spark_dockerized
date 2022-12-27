@@ -90,7 +90,7 @@ Found 1 items
 $ docker container ls   # run it in each node and check which <container ID> is running the airflow constainer
 CONTAINER ID   IMAGE                                  COMMAND                  CREATED          STATUS          PORTS                                          NAMES
 af30de6ade07   mkenjis/airflow_xtd_spark_img:latest   "/usr/bin/supervisord"   13 minutes ago   Up 13 minutes   8080/tcp                                       airf_airflow.1.qmhzon64szjb0fnrlucnxe1mn
-3b591e008a92   mkenjis/ubspkcluster_img:latest        "/usr/bin/supervisord"   15 minutes ago   Up 15 minutes   4040/tcp, 7077/tcp, 8080-8082/tcp, 10000/tcp   airf_spk_wkr1.1.ir53adba58f2x6l2hdl2eckw7
+3b591e008a92   mkenjis/ubspkcluster_img:latest        "/usr/bin/supervisord"   15 minutes ago   Up 15 minutes   4040/tcp, 7077/tcp, 8080-8082/tcp, 10000/tcp   airf_spk1.1.ir53adba58f2x6l2hdl2eckw7
 
 $ docker container cp transform.py <airflow ID>:/root
 $ docker container cp transf_dag.py <airflow ID>:/root/airflow/dags/transf_dag.py

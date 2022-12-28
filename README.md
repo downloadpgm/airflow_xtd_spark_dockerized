@@ -96,18 +96,10 @@ $ docker container cp transform.py <airflow ID>:/root
 $ docker container cp transf_dag.py <airflow ID>:/root/airflow/dags/transf_dag.py
 ```
 
-2. edit spark-defaults.conf
+2. edit files with proper settings 
 ```shell
 $ docker container exec -it <airflow ID> bash
 
-$ vi $SPARK_HOME/conf/spark-defaults.conf
-spark.driver.memory  1024m
-spark.yarn.am.memory 1024m
-spark.executor.memory  1536m
-```
-
-2. edit files with proper settings 
-```shell
 $ vi transform.py  # change HDFS path pointing to hadoop container (in the script hdfs://<hdpmst_id>:9000)
 
 $ vi $SPARK_HOME/conf/spark-env.sh

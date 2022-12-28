@@ -1,4 +1,4 @@
-FROM mkenjis/ubspkcluster1_img
+FROM mkenjis/ubspkcli_yarn_img
 
 ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=US/Central
